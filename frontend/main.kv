@@ -1,0 +1,126 @@
+WindowManager:
+    StartScreen:
+    MainScreen:
+
+
+#where the grapics is created
+<StartScreen>:
+    Label:
+        pos: 0, -100
+        text: "press to start"
+
+    Button:
+        size: root.size
+        opacity: 0
+        on_release:
+            root.manager.transition.duration = '0'#fyfy
+            app.root.current = "mainScreen"
+            app.runApp()
+    
+        
+<MainScreen>:
+    name: "mainScreen"
+
+    canvas.before:
+        PushMatrix:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    canvas.after:
+        PopMatrix:
+    Envirement:
+        id: env
+        Pengelum:
+            id: pengelum
+            size_hint: None, None
+            size: self.texture_size
+            source: "frontend/pics/pengelum.png"
+            pos: ((root.width/2) + self.xPos)-(self.width/2), ((root.height/2) + self.yPos)-(self.height/2)
+            canvas.before:
+                PushMatrix:
+                Rotate:
+                    angle: self.angleDegrees+90
+                    origin: self.center
+            canvas.after:
+                PopMatrix:
+
+        Widget:
+            canvas.before:
+                Color:
+                    rgba: 0, 0, 0, .5
+                Rectangle:
+                    pos: (root.width-1000)/2, (root.height/2)-25
+                    size: 1000, 50
+        BoxLayout:
+            size_hint: None, None
+            size: 1000, 50
+            pos: (root.width-1000)/2, (root.height/2)-25
+                
+            Slider:
+                id: slider
+                min: -484
+                max: 484
+                step: 1
+                orientation: 'horizontal'
+        
+        Widget:
+            canvas.before:
+                PushMatrix:
+                Color:
+                    rgba: 0, 0, 0, 0
+                Rectangle:
+                    pos: 90,90
+                    size: 10,10
+            canvas.after:
+                PopMatrix:
+        #backroud for contorlpanel thing
+        FloatLayout:
+
+            canvas.before:
+                PushMatrix:
+                Color:
+                    rgba: 0, 0, 0, .5
+                Rectangle:
+                    pos: 0, 0
+                    size: 100, 150
+            canvas.after:
+                PopMatrix:
+
+            Label:
+                pos: -(self.width/2)+50, -(self.height/2)+50
+                text: "Auto mode"
+                
+            Switch:
+                size_hint: None, None
+                size: 100,50
+                pos: 0,0
+                on_active: app.autoMode()
+
+            Label:
+                pos: -(self.width/2)+50, -(self.height/2)+125
+                text: "Show graph"
+
+            Switch:
+                size_hint: None, None
+                size: 100,50
+                pos: 0,75
+                on_active: app.plotGraph()
+
+        
+        Output:
+            id:output
+            pos: 0, -root.height/2 +30
+            text: f"output: {self.text}"
+            color: "black"
+
+        Graph:
+            id: graph
+            size: 500,300
+            size_hint: None, None
+            pos: root.width - self.width,0
+            
+               
+
+        

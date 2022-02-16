@@ -99,15 +99,6 @@ class GUI(App):
         self.x = []#self.graphLen * [None]
         self.y2 = []
 
-
-        #self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
-        #Clock.schedule_interval(self.updateGraph, .1)
-        
-
-        
-        
-
-
     #continus cycle
     def cycle(self, readCYCLETIME):
         self.readCYCLETIME = readCYCLETIME
@@ -126,28 +117,17 @@ class GUI(App):
         self.x.append(self.runTime)
         self.y2.append(self.pengelum.theta/np.pi)
         self.y.append(self.slider.value/484)
-
-        '''self.x.append(self.pengelum.theta)
-        self.y2.append(self.pengelum.rotAcc)
-        self.y.append(self.pengelum.rotVel)'''
-        
-
     
         #update grapics
         self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
         self.pengelum.xPos = self.slider.value
-        
 
         #runtime
         self.runTime += readCYCLETIME 
 
 
-
-
-
     def mafs(self):
         self.pengelum.xx = self.pengelum.L * self.pengelum.theta#calc x. do not thik i need it
-
 
         self.sliderAcc = -float(((self.slider.value/10) - self.sliderLast)*self.readCYCLETIME)#slider acc
         if (np.cos(self.pengelum.theta)) > 0:
@@ -156,54 +136,15 @@ class GUI(App):
             self.output.text = "up"
         self.sliderResult = self.sliderAcc * np.cos(self.pengelum.theta)#*self.pengelum.L
 
-        
-
         self.output.text = str((self.slider.value/10))
-        
-
 
         self.pengelum.rotAcc = float(((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .01))#rotvel * .01 = air resistance proportional to vel.
 
         self.pengelum.rotVel += self.pengelum.rotAcc#+ float(self.sliderResult*.5)
 
-
-
-
         self.sliderLast = self.slider.value/10
 
-
         self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)
-
-    def PID(self):
-        self.kp = 15000# * .8
-        self.ki = 400000
-        self.kd = 500#140 * .10 * 6.2
-
-        #error 
-        self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2
-        if (self.error > .5) or (self.error < -.5):
-            self.error = -self.error
-            self.kp = 6000# for 22 g ish
-
-        #integral error
-        self.integralError += self.error * self.readCYCLETIME
-
-        #derivative error
-        if self.readCYCLETIME == 0:
-            self.readCYCLETIME = self.setCYCLETIME#safing 1st cycle
-        self.derivativeError = (self.error - self.errorLast) / self.readCYCLETIME
-        self.errorLast = self.error
-
-        if (self.error > .1) or (self.error < -.1):
-            self.integralError = 0#reset integral when not upright. maby not good?... nvm, who cares
-            self.derivativeError = 0
-            
-        
-        self.slider.value += ((self.kp * self.error) + (self.ki * self.integralError) + (self.kd * self.derivativeError))*self.readCYCLETIME
-        if self.slider.value > 484:
-            self.slider.value = 484
-        elif self.slider.value < -484:
-            self.slider.value = -484
 
     def updateGraph(self):
         
@@ -223,18 +164,12 @@ class GUI(App):
         plt.grid()
         self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
 
-    def autoMode(self):
-        if self.autoMod:
-            self.autoMod = False
-        else:
-            self.autoMod = True
     def plotGraph(self):
         if self.plotGrap:
             self.plotGrap = False
             self.graph.remove_widget(FigureCanvasKivyAgg(plt.gcf()))
         else:
             self.plotGrap = True
-
 
     #runns cycle
     def runApp(self):

@@ -28,10 +28,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
+#import tensorflow
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.optimizers import Adam
-
 
 
 #window settings

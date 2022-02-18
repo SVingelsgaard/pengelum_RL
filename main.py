@@ -28,16 +28,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-#import tensorflow
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Flatten
-from tensorflow.keras.optimizers import Adam
+import tensorflow as tf
 
+from rl.agents import DQNAgent
+from rl.policy import BoltzmannQPolicy
+from rl.memory import SequentialMemory
 
 #window settings
 """Config.set('graphics', 'window_state', 'maximized')
 Config.set('graphics', 'fullscreen', '1')"""
-
 
 class WindowManager(ScreenManager):
     pass
@@ -154,12 +153,20 @@ class GUI(App):
 
 
     def build_model(states, actions):
-        model = Sequential()
-        model.add(Flatten(input_shape=(1,states)))
-        model.add(Dense(24, activation='relu'))
-        model.add(Dense(24, activation='relu'))
-        model.add(Dense(actions, activation='linear'))
+        model = tf.keras.models.Sequential([
+        tf.keras.layers.Flatten(input_shape = (1, states)),
+        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
+        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
+        tf.keras.layers.Dense(actions, activation='linear')
+        ])  
         return model
+        
+    def build_agent(model, actions):
+        policy = BoltzmannQPolicy()
+        memory = SequentialMemory(limit=50000, window_length=1)
+        dqn = DQNAgent(model=model, memory=memory, policy=policy, 
+                    nb_actions=actions, nb_steps_warmup=10, target_model_update=1e-2)
+        return dqn
 
     def updateGraph(self):
         

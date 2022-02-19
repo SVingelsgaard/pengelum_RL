@@ -81,7 +81,7 @@ class GUI(App):
 
         #program variables
         self.slider = self.root.get_screen('mainScreen').ids.slider
-        self.sliderAcc = 0
+        self.sliderVel = 0
         self.sliderLast = 0
         self.pengelum = self.root.get_screen('mainScreen').ids.pengelum
 
@@ -103,8 +103,19 @@ class GUI(App):
         self.y2 = []
 
         #ML
-        states = np.array([])
-        actions = 
+        states = np.array([[0,0,0,0]], dtype = np.float32)
+        actions = np.array([0,0], dtype = np.float32)
+        print(states.shape)
+
+        self.right = 0.0
+        self.left = 0.0
+
+        self.model = tf.keras.models.Sequential([
+        tf.keras.layers.Flatten(input_shape = [1, 4]),
+        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
+        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
+        tf.keras.layers.Dense(units=2, activation=tf.nn.softmax)#maby not right...
+        ])  
 
     #continus cycle
     def cycle(self, readCYCLETIME):
@@ -112,18 +123,26 @@ class GUI(App):
         if self.runTime != 0 and self.runTime < .03:
             time.sleep(1)
 
+        self.digitalControll()
 
         self.mafs()
+
         if self.plotGrap:
             self.updateGraph()
         if self.autoMod:
-            self.PID()
+            self.keyboardControll()
 
+        
+        #ML data
+        states = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])
+        actions = np.array([])
 
         #graph
         self.x.append(self.runTime)
         self.y2.append(self.pengelum.theta/np.pi)
         self.y.append(self.slider.value/484)
+
+        
     
         #update grapics
         self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
@@ -136,12 +155,13 @@ class GUI(App):
     def mafs(self):
         self.pengelum.xx = self.pengelum.L * self.pengelum.theta#calc x. do not thik i need it
 
-        self.sliderAcc = -float(((self.slider.value/10) - self.sliderLast)*self.readCYCLETIME)#slider acc
+        self.sliderVel = -float((self.slider.value - self.sliderLast)*self.readCYCLETIME)#slider acc
+
         if (np.cos(self.pengelum.theta)) > 0:
             self.output.text = "down" 
         else: 
             self.output.text = "up"
-        self.sliderResult = self.sliderAcc * np.cos(self.pengelum.theta)#*self.pengelum.L
+        self.sliderResult = (self.sliderVel/10) * np.cos(self.pengelum.theta)#*self.pengelum.L
 
         self.output.text = str((self.slider.value/10))
 
@@ -149,26 +169,38 @@ class GUI(App):
 
         self.pengelum.rotVel += self.pengelum.rotAcc#+ float(self.sliderResult*.5)
 
-        self.sliderLast = self.slider.value/10
+        self.sliderLast = self.slider.value
 
         self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)
     
-    def autoMode(self):
-        if keyboard.is_pressed("left arrow"):
-            self.slider.value -= 10
+    def keyboardControll(self):
         if keyboard.is_pressed("right arrow"):
-            self.slider.value += 
+            self.right = 1.0
+        else:
+            self.right = 0.0
+        if keyboard.is_pressed("left arrow"):
+            self.left = 1.0
+        else:
+            self.left = 0.0
+    
+    def digitalControll(self):
+        if self.right != 0:
+            self.slider.value += 1 *1500* self.readCYCLETIME#1500 constant
+        if self.left != 0:
+            self.slider.value -= 1 *1500* self.readCYCLETIME
+
+        #clamp
+        if self.slider.value > 484:
+            self.slider.value = 484
+        elif self.slider.value < -484:
+            self.slider.value = -484
 
 
-
-    def buildModel(states, actions):
-        model = tf.keras.models.Sequential([
-        tf.keras.layers.Flatten(input_shape = (1, states)),
-        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-        tf.keras.layers.Dense(actions, activation=tf.nn.linear)#maby not right...
-        ])  
-        return model
+    def autoMode(self):
+        if self.autoMod:
+            self.autoMod = False
+        else:
+            self.autoMod = True
 
     def buildAgent(model, actions):
         policy = BoltzmannQPolicy()

@@ -19,14 +19,12 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
-
-
 from kivy.graphics import Line
-
 
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import keyboard
 
 import tensorflow as tf
 
@@ -63,7 +61,7 @@ class Pengelum(Image):
     
 
     #for math shit
-    theta = NumericProperty(.0*np.pi)
+    theta = NumericProperty(.99*np.pi)
     L = NumericProperty(22.5)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
     xx = NumericProperty(0.0)#distance of arc form 0deg to pengelum. In meters 
     rotAcc = NumericProperty(0.0)#gravety in the direction of rotation
@@ -103,6 +101,10 @@ class GUI(App):
         self.y = []#self.graphLen * [None]
         self.x = []#self.graphLen * [None]
         self.y2 = []
+
+        #ML
+        states = np.array([])
+        actions = 
 
     #continus cycle
     def cycle(self, readCYCLETIME):
@@ -150,18 +152,25 @@ class GUI(App):
         self.sliderLast = self.slider.value/10
 
         self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)
+    
+    def autoMode(self):
+        if keyboard.is_pressed("left arrow"):
+            self.slider.value -= 10
+        if keyboard.is_pressed("right arrow"):
+            self.slider.value += 
 
 
-    def build_model(states, actions):
+
+    def buildModel(states, actions):
         model = tf.keras.models.Sequential([
         tf.keras.layers.Flatten(input_shape = (1, states)),
         tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
         tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-        tf.keras.layers.Dense(actions, activation='linear')
+        tf.keras.layers.Dense(actions, activation=tf.nn.linear)#maby not right...
         ])  
         return model
-        
-    def build_agent(model, actions):
+
+    def buildAgent(model, actions):
         policy = BoltzmannQPolicy()
         memory = SequentialMemory(limit=50000, window_length=1)
         dqn = DQNAgent(model=model, memory=memory, policy=policy, 

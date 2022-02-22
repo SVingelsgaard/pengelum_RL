@@ -32,34 +32,22 @@ from rl.agents import DQNAgent
 from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
 
-#window settings
-"""Config.set('graphics', 'window_state', 'maximized')
-Config.set('graphics', 'fullscreen', '1')"""
-
 class WindowManager(ScreenManager):
     pass
-
 class StartScreen(Screen):
     pass
-
 class MainScreen(Screen):
     pass
-
 class Envirement(FloatLayout):
     g = NumericProperty(-29.81/10)#m/s^2
     M = NumericProperty(10)# how manny pixels in a meter
-
-
 class Output(Label):
     text = StringProperty("0.0")
-    
 class Pengelum(Image):
     #for graphics
     xPos = NumericProperty(0)#px
     yPos = NumericProperty(0)#px
     angleDegrees = NumericProperty(0)
-    
-
     #for math shit
     theta = NumericProperty(.99*np.pi)
     L = NumericProperty(22.5)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
@@ -109,13 +97,6 @@ class GUI(App):
 
         self.right = 0.0
         self.left = 0.0
-
-        self.model = tf.keras.models.Sequential([
-        tf.keras.layers.Flatten(input_shape = [1, 4]),
-        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-        tf.keras.layers.Dense(units=2, activation=tf.nn.softmax)#maby not right...
-        ])  
 
     #continus cycle
     def cycle(self, readCYCLETIME):
@@ -171,8 +152,7 @@ class GUI(App):
 
         self.sliderLast = self.slider.value
 
-        self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)
-    
+        self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)   
     def keyboardControll(self):
         if keyboard.is_pressed("right arrow"):
             self.right = 1.0
@@ -181,38 +161,25 @@ class GUI(App):
         if keyboard.is_pressed("left arrow"):
             self.left = 1.0
         else:
-            self.left = 0.0
-    
+            self.left = 0.0   
     def digitalControll(self):
         if self.right != 0:
-            self.slider.value += 1 *1500* self.readCYCLETIME#1500 constant
+            self.slider.value += self.right *1500* self.readCYCLETIME#1500 constant. 
         if self.left != 0:
-            self.slider.value -= 1 *1500* self.readCYCLETIME
+            self.slider.value -= self.left *1500* self.readCYCLETIME
 
         #clamp
         if self.slider.value > 484:
             self.slider.value = 484
         elif self.slider.value < -484:
             self.slider.value = -484
-
-
     def autoMode(self):
         if self.autoMod:
             self.autoMod = False
         else:
             self.autoMod = True
-
-    def buildAgent(model, actions):
-        policy = BoltzmannQPolicy()
-        memory = SequentialMemory(limit=50000, window_length=1)
-        dqn = DQNAgent(model=model, memory=memory, policy=policy, 
-                    nb_actions=actions, nb_steps_warmup=10, target_model_update=1e-2)
-        return dqn
-
     def updateGraph(self):
-        
         plt.clf()
-
         plt.title("pengelum angle")
         plt.xlabel("t")
         plt.ylabel("angle/sliderval")
@@ -226,22 +193,18 @@ class GUI(App):
         plt.plot(self.x, self.y2, 'r')
         plt.grid()
         self.graph.add_widget(FigureCanvasKivyAgg(plt.gcf()))
-
     def plotGraph(self):
         if self.plotGrap:
             self.plotGrap = False
             self.graph.remove_widget(FigureCanvasKivyAgg(plt.gcf()))
         else:
             self.plotGrap = True
-
     #runns cycle
     def runApp(self):
         Clock.schedule_interval(self.cycle, self.setCYCLETIME)
-
     #runs myApp(graphics)
     def build(self):
         return Builder.load_file("frontend/main.kv")
-
 #runs program and cycle
 if __name__ == '__main__':
     GUI().run()

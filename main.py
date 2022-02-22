@@ -91,12 +91,12 @@ class GUI(App):
         self.y2 = []
 
         #ML
-        states = np.array([[0,0,0,0]], dtype = np.float32)
-        actions = np.array([0,0], dtype = np.float32)
-        print(states.shape)
+        self.states = np.array([[0,0,0,0]], dtype = np.float32)
+        self.actions = np.array([False,False], dtype = np.bool_)
 
-        self.right = 0.0
-        self.left = 0.0
+
+        self.right = False
+        self.left = False
 
     #continus cycle
     def cycle(self, readCYCLETIME):
@@ -115,8 +115,7 @@ class GUI(App):
 
         
         #ML data
-        states = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])
-        actions = np.array([])
+        self.states = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])
 
         #graph
         self.x.append(self.runTime)
@@ -155,18 +154,18 @@ class GUI(App):
         self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)   
     def keyboardControll(self):
         if keyboard.is_pressed("right arrow"):
-            self.right = 1.0
+            self.right = True
         else:
-            self.right = 0.0
+            self.right = False
         if keyboard.is_pressed("left arrow"):
-            self.left = 1.0
+            self.left = True
         else:
-            self.left = 0.0   
+            self.left = False  
     def digitalControll(self):
         if self.right != 0:
-            self.slider.value += self.right *1500* self.readCYCLETIME#1500 constant. 
+            self.slider.value += int(self.right) *1500* self.readCYCLETIME#1500 constant. 
         if self.left != 0:
-            self.slider.value -= self.left *1500* self.readCYCLETIME
+            self.slider.value -= int(self.left) *1500* self.readCYCLETIME
 
         #clamp
         if self.slider.value > 484:

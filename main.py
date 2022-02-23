@@ -32,6 +32,8 @@ from rl.agents import DQNAgent
 from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
 
+import gym
+
 class WindowManager(ScreenManager):
     pass
 class StartScreen(Screen):
@@ -133,25 +135,16 @@ class GUI(App):
 
 
     def mafs(self):
-        self.pengelum.xx = self.pengelum.L * self.pengelum.theta#calc x. do not thik i need it
+        self.sliderVel = -float((self.slider.value - self.sliderLast)*self.readCYCLETIME)#slider vel
+        self.sliderLast = self.slider.value#update last slider val
 
-        self.sliderVel = -float((self.slider.value - self.sliderLast)*self.readCYCLETIME)#slider acc
+        self.sliderResult = (self.sliderVel/10) * np.cos(self.pengelum.theta)#how much te slider vel will affect theta
 
-        if (np.cos(self.pengelum.theta)) > 0:
-            self.output.text = "down" 
-        else: 
-            self.output.text = "up"
-        self.sliderResult = (self.sliderVel/10) * np.cos(self.pengelum.theta)#*self.pengelum.L
+        self.output.text = str((self.slider.value/10))#output. whatever
 
-        self.output.text = str((self.slider.value/10))
+        self.pengelum.rotVel += (float(((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .3)))*self.readCYCLETIME#angular vel
 
-        self.pengelum.rotAcc = float(((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .01))#rotvel * .01 = air resistance proportional to vel.
-
-        self.pengelum.rotVel += self.pengelum.rotAcc#+ float(self.sliderResult*.5)
-
-        self.sliderLast = self.slider.value
-
-        self.pengelum.theta += self.pengelum.rotVel * self.readCYCLETIME+ float(self.sliderResult)   
+        self.pengelum.theta += self.pengelum.rotVel + float(self.sliderResult)#set angle. belive slider result shoud be here. prollyu not 100%right. but feels realistic
     def keyboardControll(self):
         if keyboard.is_pressed("right arrow"):
             self.right = True
@@ -163,9 +156,9 @@ class GUI(App):
             self.left = False  
     def digitalControll(self):
         if self.right != 0:
-            self.slider.value += int(self.right) *1500* self.readCYCLETIME#1500 constant. 
+            self.slider.value += int(self.right) *1000* self.readCYCLETIME#1500 for float 0-1 val. 
         if self.left != 0:
-            self.slider.value -= int(self.left) *1500* self.readCYCLETIME
+            self.slider.value -= int(self.left) *1000* self.readCYCLETIME
 
         #clamp
         if self.slider.value > 484:

@@ -1,2 +1,2 @@
-# pengelum
-pengelum physics. maby differential equation??
+pengelum prodject with reiforcment learning control. maby
+

@@ -28,7 +28,7 @@ import keyboard
 
 import tensorflow as tf
 
-from rl.agents import DQNAgent
+from rl.agents import DQNAgent #think i use this
 from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
 
@@ -93,8 +93,17 @@ class GUI(App):
         self.y2 = []
 
         #ML
-        self.states = np.array([[0,0,0,0]], dtype = np.float32)
-        self.actions = np.array([False,False], dtype = np.bool_)
+        self.state = np.array([[0,0,0,0]], dtype = np.float32)
+        self.action = np.array([False,False,False], dtype = np.bool_)
+        self.reward = 0
+
+        self.model = tf.keras.models.Sequential([
+        tf.keras.layers.Flatten(input_shape = [1, 4]),
+        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
+        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
+        tf.keras.layers.Dense(units=2, activation=tf.nn.softmax)#maby not right...
+        ])  
+
 
 
         self.right = False
@@ -117,7 +126,8 @@ class GUI(App):
 
         
         #ML data
-        self.states = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])
+        self.step()
+        
 
         #graph
         self.x.append(self.runTime)
@@ -145,6 +155,25 @@ class GUI(App):
         self.pengelum.rotVel += (float(((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .3)))*self.readCYCLETIME#angular vel
 
         self.pengelum.theta += self.pengelum.rotVel + float(self.sliderResult)#set angle. belive slider result shoud be here. prollyu not 100%right. but feels realistic
+    
+    
+    def step(self):
+        self.states = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])#state of the sim
+        
+
+        self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2#calc error
+        #reward
+        if (self.error < .2) and (self.error > -.2):
+            self.reward += 1
+            #possible break
+
+
+
+
+
+
+
+
     def keyboardControll(self):
         if keyboard.is_pressed("right arrow"):
             self.right = True
@@ -157,8 +186,10 @@ class GUI(App):
     def digitalControll(self):
         if self.right != 0:
             self.slider.value += int(self.right) *1000* self.readCYCLETIME#1500 for float 0-1 val. 
+            self.right = False
         if self.left != 0:
             self.slider.value -= int(self.left) *1000* self.readCYCLETIME
+            self.left = False
 
         #clamp
         if self.slider.value > 484:

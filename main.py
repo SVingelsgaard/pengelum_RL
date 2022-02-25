@@ -27,12 +27,9 @@ import time
 import keyboard
 
 import tensorflow as tf
+from tf_agents.networks import q_network
+from tf_agents.agents.dqn import dqn_agent
 
-from rl.agents import DQNAgent #think i use this
-from rl.policy import BoltzmannQPolicy
-from rl.memory import SequentialMemory
-
-import gym
 
 class WindowManager(ScreenManager):
     pass
@@ -46,7 +43,7 @@ class Envirement(FloatLayout):
 class Output(Label):
     text = StringProperty("0.0")
 class Pengelum(Image):
-    #for graphics
+    #for graphics   
     xPos = NumericProperty(0)#px
     yPos = NumericProperty(0)#px
     angleDegrees = NumericProperty(0)
@@ -104,6 +101,10 @@ class GUI(App):
         tf.keras.layers.Dense(units=2, activation=tf.nn.softmax)#maby not right...
         ])  
 
+        q_net = q_network.QNetwork(
+        train_env.observation_spec(),
+        train_env.action_spec(),
+        fc_layer_params=(100,))
 
 
         self.right = False

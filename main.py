@@ -170,25 +170,24 @@ class GUI(App):
 
 
     def mafs(self):
-        self.time = time.time()
+        self.time = time.time()#set time to actual time
 
-        if self.timeLast == 0:
+        if self.timeLast == 0:#on first cycle
             self.timeLast = self.time
             self.mafsTime = self.setCYCLETIME
+        else:
+            self.mafsTime = self.time - self.timeLast #calc mafstime. basically cycletime
+            self.timeLast = self.time#uptdate last time
+
         
-
-        self.mafsTime = self.time - self.timeLast
-
-        self.time = self.time
-
-        self.sliderVel = -float((self.slider.value - self.sliderLast)*self.readCYCLETIME)#slider vel
+        self.sliderVel = -float((self.slider.value - self.sliderLast)*self.mafsTime)#slider vel
         self.sliderLast = self.slider.value#update last slider val
 
         self.sliderResult = (self.sliderVel/10) * np.cos(self.pengelum.theta)#how much te slider vel will affect theta
 
         self.output.text = str((self.slider.value/10))#output. whatever
 
-        self.pengelum.rotVel += (float(((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .3)))*self.readCYCLETIME#angular vel
+        self.pengelum.rotVel += (float(((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .3)))*self.mafsTime#angular vel
 
         self.pengelum.theta += self.pengelum.rotVel + float(self.sliderResult)#set angle. belive slider result shoud be here. prollyu not 100%right. but feels realistic
     

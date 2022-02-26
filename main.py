@@ -1,5 +1,6 @@
 from doctest import master
 from operator import length_hint
+from pickle import TRUE
 import string
 import kivy
 from kivy.app import App
@@ -26,9 +27,11 @@ import matplotlib.pyplot as plt
 import time
 import keyboard
 
+import gym
 import tensorflow as tf
 from tf_agents.networks import q_network
 from tf_agents.agents.dqn import dqn_agent
+
 
 
 class WindowManager(ScreenManager):
@@ -83,6 +86,7 @@ class GUI(App):
         self.integralError = 0#allso for not fuckup
         self.autoMod = False
         self.plotGrap = False
+        self.resetEnv = False
 
         #graph variables
         self.y = []#self.graphLen * [None]
@@ -90,6 +94,9 @@ class GUI(App):
         self.y2 = []
 
         #ML
+        #ai class. maby idfk shit
+        
+    
         self.state = np.array([[0,0,0,0]], dtype = np.float32)
         self.action = np.array([False,False,False], dtype = np.bool_)
         self.reward = 0
@@ -101,14 +108,14 @@ class GUI(App):
         tf.keras.layers.Dense(units=2, activation=tf.nn.softmax)#maby not right...
         ])  
 
-        q_net = q_network.QNetwork(
+        '''q_net = q_network.QNetwork(
         train_env.observation_spec(),
         train_env.action_spec(),
-        fc_layer_params=(100,))
+        fc_layer_params=(100,))'''
 
 
-        self.right = False
-        self.left = False
+        self.right = 0.0
+        self.left = 0.0
 
     #continus cycle
     def cycle(self, readCYCLETIME):
@@ -124,6 +131,9 @@ class GUI(App):
             self.updateGraph()
         if self.autoMod:
             self.keyboardControll()
+        
+        if self.resetEnv:
+            self.reset()
 
         
         #ML data
@@ -135,8 +145,6 @@ class GUI(App):
         self.y2.append(self.pengelum.theta/np.pi)
         self.y.append(self.slider.value/484)
 
-        
-    
         #update grapics
         self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
         self.pengelum.xPos = self.slider.value
@@ -159,6 +167,7 @@ class GUI(App):
     
     
     def step(self):
+        self.reward = 0
         self.states = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])#state of the sim
         
 
@@ -167,29 +176,25 @@ class GUI(App):
         if (self.error < .2) and (self.error > -.2):
             self.reward += 1
             #possible break
+    def resetButton(self):
+        self.resetEnv = True
 
+    def reset(self):
+        self.pengelum.theta = 1 * np.pi
+        self.pengelum.rotVel = 0
+        self.slider.value = 0
+        self.sliderLast
+        self.sliderResult = 0
+        self.left = 0
+        self.right = 0
+        self.resetEnv = False
 
-
-
-
-
-
-
-    def keyboardControll(self):
-        if keyboard.is_pressed("right arrow"):
-            self.right = True
-        else:
-            self.right = False
-        if keyboard.is_pressed("left arrow"):
-            self.left = True
-        else:
-            self.left = False  
     def digitalControll(self):
         if self.right != 0:
-            self.slider.value += int(self.right) *1000* self.readCYCLETIME#1500 for float 0-1 val. 
+            self.slider.value += float(self.right) *1000* self.readCYCLETIME#1500 for float 0-1 val. 
             self.right = False
         if self.left != 0:
-            self.slider.value -= int(self.left) *1000* self.readCYCLETIME
+            self.slider.value -= float(self.left) *1000* self.readCYCLETIME
             self.left = False
 
         #clamp
@@ -197,6 +202,15 @@ class GUI(App):
             self.slider.value = 484
         elif self.slider.value < -484:
             self.slider.value = -484
+    def keyboardControll(self):
+        if keyboard.is_pressed("right arrow"):
+            self.right = 1
+        else:
+            self.right = 0
+        if keyboard.is_pressed("left arrow"):
+            self.left = 1
+        else:
+            self.left = 0
     def autoMode(self):
         if self.autoMod:
             self.autoMod = False
@@ -231,4 +245,5 @@ class GUI(App):
         return Builder.load_file("frontend/main.kv")
 #runs program and cycle
 if __name__ == '__main__':
-    GUI().run()
+    sim = GUI()
+    sim.run()

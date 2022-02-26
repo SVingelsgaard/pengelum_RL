@@ -34,6 +34,22 @@ from tf_agents.agents.dqn import dqn_agent
 
 
 
+model = tf.keras.models.Sequential([
+        tf.keras.layers.Flatten(input_shape = [1, 4]),
+        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
+        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
+        tf.keras.layers.Dense(units=3, activation=tf.nn.softmax)#maby not right...
+        ])  
+
+class Env(gym.Env):
+    def reset():
+        sim.reset()
+    def step():
+        sim.mafs()
+ 
+
+
+
 class WindowManager(ScreenManager):
     pass
 class StartScreen(Screen):
@@ -48,13 +64,10 @@ class Output(Label):
 class Pengelum(Image):
     #for graphics   
     xPos = NumericProperty(0)#px
-    yPos = NumericProperty(0)#px
     angleDegrees = NumericProperty(0)
     #for math shit
     theta = NumericProperty(.99*np.pi)
     L = NumericProperty(22.5)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
-    xx = NumericProperty(0.0)#distance of arc form 0deg to pengelum. In meters 
-    rotAcc = NumericProperty(0.0)#gravety in the direction of rotation
     rotVel = NumericProperty(0.0)
 
 class Graph(BoxLayout):
@@ -87,6 +100,10 @@ class GUI(App):
         self.autoMod = False
         self.plotGrap = False
         self.resetEnv = False
+        self.done = False
+        self.time = 0
+        self.timeLast = 0
+        self.mafsTime = 0
 
         #graph variables
         self.y = []#self.graphLen * [None]
@@ -101,12 +118,6 @@ class GUI(App):
         self.action = np.array([False,False,False], dtype = np.bool_)
         self.reward = 0
 
-        self.model = tf.keras.models.Sequential([
-        tf.keras.layers.Flatten(input_shape = [1, 4]),
-        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-        tf.keras.layers.Dense(units=2, activation=tf.nn.softmax)#maby not right...
-        ])  
 
         '''q_net = q_network.QNetwork(
         train_env.observation_spec(),
@@ -118,12 +129,16 @@ class GUI(App):
         self.left = 0.0
 
     #continus cycle
-    def cycle(self, readCYCLETIME):
+    def cycle (self, readCYCLETIME):
+        #scuffed time shit
         self.readCYCLETIME = readCYCLETIME
         if self.runTime != 0 and self.runTime < .03:
             time.sleep(1)
 
         self.digitalControll()
+
+        if self.resetEnv:
+            self.reset()
 
         self.mafs()
 
@@ -132,13 +147,8 @@ class GUI(App):
         if self.autoMod:
             self.keyboardControll()
         
-        if self.resetEnv:
-            self.reset()
-
-        
         #ML data
         self.step()
-        
 
         #graph
         self.x.append(self.runTime)
@@ -150,10 +160,27 @@ class GUI(App):
         self.pengelum.xPos = self.slider.value
 
         #runtime
-        self.runTime += readCYCLETIME 
+        self.runTime += self.readCYCLETIME 
+
+        if (self.error > .4) or (self.error < -.4):
+            self.done = True
+        if self.done:
+            self.reset()
+            self.done = False
 
 
     def mafs(self):
+        self.time = time.time()
+
+        if self.timeLast == 0:
+            self.timeLast = self.time
+            self.mafsTime = self.setCYCLETIME
+        
+
+        self.mafsTime = self.time - self.timeLast
+
+        self.time = self.time
+
         self.sliderVel = -float((self.slider.value - self.sliderLast)*self.readCYCLETIME)#slider vel
         self.sliderLast = self.slider.value#update last slider val
 
@@ -179,11 +206,12 @@ class GUI(App):
     def resetButton(self):
         self.resetEnv = True
 
+
     def reset(self):
-        self.pengelum.theta = 1 * np.pi
+        self.pengelum.theta = .99 * np.pi
         self.pengelum.rotVel = 0
         self.slider.value = 0
-        self.sliderLast
+        self.sliderLast = 0
         self.sliderResult = 0
         self.left = 0
         self.right = 0

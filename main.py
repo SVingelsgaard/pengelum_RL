@@ -99,7 +99,6 @@ class GUI(App):
         self.integralError = 0#allso for not fuckup
         self.autoMod = False
         self.plotGrap = False
-        self.resetEnv = False
         self.done = False
         self.time = 0
         self.timeLast = 0
@@ -140,15 +139,15 @@ class GUI(App):
         if self.resetEnv:
             self.reset()
 
-        self.mafs()
+
 
         if self.plotGrap:
             self.updateGraph()
         if self.autoMod:
             self.keyboardControll()
         
-        #ML data
-        self.step()
+        #ML data + mafs atm
+        #self.step()
 
         #graph
         self.x.append(self.runTime)
@@ -193,6 +192,7 @@ class GUI(App):
     
     
     def step(self):
+        #self.mafs()
         self.reward = 0
         self.states = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])#state of the sim
         
@@ -202,8 +202,7 @@ class GUI(App):
         if (self.error < .2) and (self.error > -.2):
             self.reward += 1
             #possible break
-    def resetButton(self):
-        self.resetEnv = True
+
 
 
     def reset(self):

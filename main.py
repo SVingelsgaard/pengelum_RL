@@ -28,8 +28,10 @@ import time
 import keyboard
 
 import gym
+from gym.spaces import Discrete, Box
 
 import tensorflow as tf
+import keras
 
 #from tf_agents.agents.dqn import dqn_agent
 from rl.agents import DQNAgent
@@ -39,11 +41,16 @@ from rl.memory import SequentialMemory
 
 
 class Env(gym.Env):
-    def reset():
+    def __init__(self):
+        # Actions we can take, down, stay, up
+        self.action_space = Discrete(3)
+        # Temperature array
+        self.observation_space = Box(low=np.array([0]), high=np.array([3]))
+    def reset(self):
         sim.reset()
-    def step():
+    def step(self):
         sim.mafs()
-    def render():
+    def render(self):
         pass
 
 class WindowManager(ScreenManager):
@@ -132,15 +139,16 @@ class GUI(App):
               model=model, 
               memory=SequentialMemory(limit=50000, window_length=1), 
               policy=BoltzmannQPolicy(), 
-              nb_actions=3, 
+              nb_actions=env.action_space.n, 
               nb_steps_warmup=10,
               target_model_update=1e-2
               )
         #compile agent
-        dqn.compile(tf.keras.optimizers.Adam(lr=1e-3), metrics=['mae'])
+        dqn.compile(tf.keras.optimizers.Adam(learning_rate=1e-3), metrics=['mae'])
 
         #train agent
-        #dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)
+        dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)
+        
 
 
     #continus cycle

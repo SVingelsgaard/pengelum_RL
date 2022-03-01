@@ -103,6 +103,7 @@ class GUI(App):
         self.time = 0
         self.timeLast = 0
         self.mafsTime = 0
+        self.error = 0
 
         #graph variables
         self.y = []#self.graphLen * [None]
@@ -136,8 +137,6 @@ class GUI(App):
 
         self.digitalControll()
 
-        if self.resetEnv:
-            self.reset()
 
 
 
@@ -148,6 +147,7 @@ class GUI(App):
         
         #ML data + mafs atm
         #self.step()
+
 
         #graph
         self.x.append(self.runTime)
@@ -167,32 +167,8 @@ class GUI(App):
             self.reset()
             self.done = False
 
-
-    def mafs(self):
-        self.time = time.time()#set time to actual time
-
-        if self.timeLast == 0:#on first cycle
-            self.timeLast = self.time
-            self.mafsTime = self.setCYCLETIME
-        else:
-            self.mafsTime = self.time - self.timeLast #calc mafstime. basically cycletime
-            self.timeLast = self.time#uptdate last time
-
-        
-        self.sliderVel = -float((self.slider.value - self.sliderLast)*self.mafsTime)#slider vel
-        self.sliderLast = self.slider.value#update last slider val
-
-        self.sliderResult = (self.sliderVel/10) * np.cos(self.pengelum.theta)#how much te slider vel will affect theta
-
-        self.output.text = str((self.slider.value/10))#output. whatever
-
-        self.pengelum.rotVel += (float(((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .3)))*self.mafsTime#angular vel
-
-        self.pengelum.theta += self.pengelum.rotVel + float(self.sliderResult)#set angle. belive slider result shoud be here. prollyu not 100%right. but feels realistic
-    
-    
     def step(self):
-        #self.mafs()
+        self.mafs()
         self.reward = 0
         self.states = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])#state of the sim
         
@@ -204,6 +180,31 @@ class GUI(App):
             #possible break
 
 
+    def mafs(self):
+        self.time = time.time()#set time to actual time
+
+        if self.timeLast == 0:#on first cycle
+            self.timeLast = self.time-.2
+            
+        self.mafsTime = self.time - self.timeLast #calc mafstime. basically cycletime
+        self.timeLast = self.time#uptdate last time
+
+        print(self.mafsTime)
+        self.sliderVel = -float((self.slider.value - self.sliderLast)*self.mafsTime)#slider vel
+        self.sliderLast = self.slider.value#update last slider val
+
+        self.sliderResult = (self.sliderVel/10) * np.cos(self.pengelum.theta)#how much te slider vel will affect theta
+
+        self.output.text = str((self.slider.value/10))#output. whatever
+
+        self.pengelum.rotVel += float((((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .3)))*self.mafsTime#angular vel
+
+        self.pengelum.theta += self.pengelum.rotVel + float(self.sliderResult)#set angle. belive slider result shoud be here. prollyu not 100%right. but feels realistic
+    
+    
+    
+
+
 
     def reset(self):
         self.pengelum.theta = .99 * np.pi
@@ -213,7 +214,6 @@ class GUI(App):
         self.sliderResult = 0
         self.left = 0
         self.right = 0
-        self.resetEnv = False
 
     def digitalControll(self):
         if self.right != 0:
@@ -242,6 +242,7 @@ class GUI(App):
             self.autoMod = False
         else:
             self.autoMod = True
+        self.step()
     def updateGraph(self):
         plt.clf()
         plt.title("pengelum angle")

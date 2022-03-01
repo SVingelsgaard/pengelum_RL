@@ -28,27 +28,23 @@ import time
 import keyboard
 
 import gym
+
 import tensorflow as tf
-from tf_agents.networks import q_network
-from tf_agents.agents.dqn import dqn_agent
+
+#from tf_agents.agents.dqn import dqn_agent
+from rl.agents import DQNAgent
+from rl.policy import BoltzmannQPolicy
+from rl.memory import SequentialMemory
 
 
-
-model = tf.keras.models.Sequential([
-        tf.keras.layers.Flatten(input_shape = [1, 4]),
-        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-        tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-        tf.keras.layers.Dense(units=3, activation=tf.nn.softmax)#maby not right...
-        ])  
 
 class Env(gym.Env):
     def reset():
         sim.reset()
     def step():
         sim.mafs()
- 
-
-
+    def render():
+        pass
 
 class WindowManager(ScreenManager):
     pass
@@ -80,7 +76,7 @@ class GUI(App):
         self.setCYCLETIME = 0.02
         self.readCYCLETIME = 0
         self.runTime = 0
-        self.env = self.root.get_screen('mainScreen').ids.env
+        self.envirement = self.root.get_screen('mainScreen').ids.env
 
         #program variables
         self.slider = self.root.get_screen('mainScreen').ids.slider
@@ -104,6 +100,8 @@ class GUI(App):
         self.timeLast = 0
         self.mafsTime = 0
         self.error = 0
+        self.episodes = 0
+        self.score = 0 
 
         #graph variables
         self.y = []#self.graphLen * [None]
@@ -112,21 +110,38 @@ class GUI(App):
 
         #ML
         #ai class. maby idfk shit
-        
-    
         self.state = np.array([[0,0,0,0]], dtype = np.float32)
         self.action = np.array([False,False,False], dtype = np.bool_)
         self.reward = 0
-
-
-        '''q_net = q_network.QNetwork(
-        train_env.observation_spec(),
-        train_env.action_spec(),
-        fc_layer_params=(100,))'''
-
-
         self.right = 0.0
         self.left = 0.0
+
+        #create env. gym class i think
+        env = Env()
+
+        #create model
+        model = tf.keras.models.Sequential([
+                tf.keras.layers.Flatten(input_shape = [1, 4]),# replcae with self.state.shape maby
+                tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
+                tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
+                tf.keras.layers.Dense(units=3, activation=tf.nn.softmax)#maby not right...
+                ]) 
+
+        #create agent
+        dqn = DQNAgent(
+              model=model, 
+              memory=SequentialMemory(limit=50000, window_length=1), 
+              policy=BoltzmannQPolicy(), 
+              nb_actions=3, 
+              nb_steps_warmup=10,
+              target_model_update=1e-2
+              )
+        #compile agent
+        dqn.compile(tf.keras.optimizers.Adam(lr=1e-3), metrics=['mae'])
+
+        #train agent
+        #dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)
+
 
     #continus cycle
     def cycle (self, readCYCLETIME):
@@ -146,7 +161,7 @@ class GUI(App):
             self.keyboardControll()
         
         #ML data + mafs atm
-        #self.step()
+        self.step()
 
 
         #graph
@@ -162,13 +177,12 @@ class GUI(App):
         self.runTime += self.readCYCLETIME 
 
         if (self.error > .4) or (self.error < -.4):
-            self.done = True
-        if self.done:
+            self.episodes += 1
             self.reset()
-            self.done = False
-
+            
     def step(self):
         self.mafs()
+        
         self.reward = 0
         self.states = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])#state of the sim
         
@@ -177,8 +191,19 @@ class GUI(App):
         #reward
         if (self.error < .2) and (self.error > -.2):
             self.reward += 1
-            #possible break
+        self.score += self.reward
+        
+        #check done
+        if self.episodes >= 5:
+            self.done = True
+            
+        #done
+        if self.done:
+            print(f"score: {self.score}")
+            App.get_running_app().stop()
+            self.done = False
 
+        self.output.text = f"episode nr {self.episodes+1}"#output. whatever
 
     def mafs(self):
         self.time = time.time()#set time to actual time
@@ -189,15 +214,14 @@ class GUI(App):
         self.mafsTime = self.time - self.timeLast #calc mafstime. basically cycletime
         self.timeLast = self.time#uptdate last time
 
-        print(self.mafsTime)
         self.sliderVel = -float((self.slider.value - self.sliderLast)*self.mafsTime)#slider vel
         self.sliderLast = self.slider.value#update last slider val
 
         self.sliderResult = (self.sliderVel/10) * np.cos(self.pengelum.theta)#how much te slider vel will affect theta
 
-        self.output.text = str((self.slider.value/10))#output. whatever
+        
 
-        self.pengelum.rotVel += float((((self.env.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .3)))*self.mafsTime#angular vel
+        self.pengelum.rotVel += float((((self.envirement.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .3)))*self.mafsTime#angular vel
 
         self.pengelum.theta += self.pengelum.rotVel + float(self.sliderResult)#set angle. belive slider result shoud be here. prollyu not 100%right. but feels realistic
     
@@ -214,6 +238,7 @@ class GUI(App):
         self.sliderResult = 0
         self.left = 0
         self.right = 0
+        
 
     def digitalControll(self):
         if self.right != 0:
@@ -242,7 +267,8 @@ class GUI(App):
             self.autoMod = False
         else:
             self.autoMod = True
-        self.step()
+        
+        
     def updateGraph(self):
         plt.clf()
         plt.title("pengelum angle")

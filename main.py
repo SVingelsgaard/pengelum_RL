@@ -38,7 +38,8 @@ from rl.agents import DQNAgent
 from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
 
-
+#random test shit
+from copy import deepcopy
 
 class Env(gym.Env):
     def __init__(self):
@@ -146,9 +147,16 @@ class GUI(App):
         #compile agent
         dqn.compile(tf.keras.optimizers.Adam(learning_rate=1e-3), metrics=['mae'])
 
+
+
+
         #train agent
-        dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)
         
+        dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
+        
+
+
+
 
 
     #continus cycle

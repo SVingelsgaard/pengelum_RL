@@ -49,8 +49,13 @@ class Env(gym.Env):
         self.observation_space = Box(low=np.array([0]), high=np.array([3]))
     def reset(self):
         sim.reset()
-    def step(self):
+        return sim.state 
+    def step(self, action):
+        sim.action = action
         sim.mafs()
+        info = {}
+        # Return step information
+        return sim.state, sim.reward, sim.done, info
     def render(self):
         pass
 
@@ -152,7 +157,7 @@ class GUI(App):
 
         #train agent
         
-        dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
+        dqn.fit(env, nb_steps=5000, visualize=False, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
         
 
 
@@ -197,10 +202,14 @@ class GUI(App):
             self.reset()
             
     def step(self):
+        #Agent input
+        self.right = self.action[0]
+        self.left = self.action[1]
+
         self.mafs()
         
         self.reward = 0
-        self.states = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])#state of the sim
+        self.state = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])#state of the sim
         
 
         self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2#calc error
@@ -216,8 +225,8 @@ class GUI(App):
         #done
         if self.done:
             print(f"score: {self.score}")
-            App.get_running_app().stop()
-            self.done = False
+            #App.get_running_app().stop()
+            #self.done = False
 
         self.output.text = f"episode nr {self.episodes+1}"#output. whatever
 
@@ -230,6 +239,7 @@ class GUI(App):
         self.mafsTime = self.time - self.timeLast #calc mafstime. basically cycletime
         self.timeLast = self.time#uptdate last time
 
+        
         self.sliderVel = -float((self.slider.value - self.sliderLast)*self.mafsTime)#slider vel
         self.sliderLast = self.slider.value#update last slider val
 
@@ -254,6 +264,7 @@ class GUI(App):
         self.sliderResult = 0
         self.left = 0
         self.right = 0
+        self.state = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])#state of the sim
         
 
     def digitalControll(self):

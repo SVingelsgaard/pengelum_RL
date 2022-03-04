@@ -126,14 +126,14 @@ class GUI(App):
         self.state = np.array([[0,0,0,0]], dtype = np.float32)
         self.action = np.array([False,False,False], dtype = np.bool_)
         self.reward = 0
-        self.right = 0.0
-        self.left = 0.0
+        self.right = False
+        self.left = False
 
         #create env. gym class i think
-        env = Env()
+        self.env = Env()
 
         #create model
-        model = tf.keras.models.Sequential([
+        self.model = tf.keras.models.Sequential([
                 tf.keras.layers.Flatten(input_shape = [1, 4]),# replcae with self.state.shape maby
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
@@ -141,24 +141,24 @@ class GUI(App):
                 ]) 
 
         #create agent
-        dqn = DQNAgent(
-              model=model, 
+        self.dqn = DQNAgent(
+              model=self.model, 
               memory=SequentialMemory(limit=50000, window_length=1), 
               policy=BoltzmannQPolicy(), 
-              nb_actions=env.action_space.n, 
+
+              nb_actions=self.env.action_space.n, 
               nb_steps_warmup=10,
               target_model_update=1e-2
               )
         #compile agent
-        dqn.compile(tf.keras.optimizers.Adam(learning_rate=1e-3), metrics=['mae'])
+        self.dqn.compile(tf.keras.optimizers.Adam(learning_rate=1e-3), metrics=['mae'])
 
 
 
 
         #train agent
         
-        dqn.fit(env, nb_steps=5000, visualize=False, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
-        
+                
 
 
 
@@ -166,7 +166,7 @@ class GUI(App):
 
     #continus cycle
     def cycle (self, readCYCLETIME):
-        #scuffed time shit
+        #scuffed time shit  
         self.readCYCLETIME = readCYCLETIME
         if self.runTime != 0 and self.runTime < .03:
             time.sleep(1)
@@ -203,9 +203,12 @@ class GUI(App):
             
     def step(self):
         #Agent input
-        self.right = self.action[0]
-        self.left = self.action[1]
+        
+        self.right = self.action
 
+        #self.left = self.action[1]
+        print(self.action.shape)
+        
         self.mafs()
         
         self.reward = 0
@@ -268,12 +271,16 @@ class GUI(App):
         
 
     def digitalControll(self):
-        if self.right != 0:
-            self.slider.value += float(self.right) *1000* self.readCYCLETIME#1500 for float 0-1 val. 
-            self.right = False
-        if self.left != 0:
-            self.slider.value -= float(self.left) *1000* self.readCYCLETIME
-            self.left = False
+        try:
+            if self.right != 0:
+                self.slider.value += float(self.right) *1000* self.readCYCLETIME#1500 for float 0-1 val. 
+                self.right = False
+            if self.left != 0:
+                self.slider.value -= float(self.left) *1000* self.readCYCLETIME
+                self.left = False
+        except:
+            pass
+        
 
         #clamp
         if self.slider.value > 484:
@@ -281,7 +288,7 @@ class GUI(App):
         elif self.slider.value < -484:
             self.slider.value = -484
     def keyboardControll(self):
-        if keyboard.is_pressed("right arrow"):
+        if keyboard.is_pressed("right arrow"): 
             self.right = 1
         else:
             self.right = 0
@@ -294,6 +301,11 @@ class GUI(App):
             self.autoMod = False
         else:
             self.autoMod = True
+        
+        
+        self.dqn.fit(self.env, nb_steps=5000, visualize=False, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
+
+        
         
         
     def updateGraph(self):

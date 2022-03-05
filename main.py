@@ -54,6 +54,7 @@ class Env(gym.Env):
     def step(self, action):
         sim.action = action
         sim.step()
+        
         info = {}
         # Return step information
         return sim.state, sim.reward, sim.done, info
@@ -211,13 +212,13 @@ class GUI(App):
         self.right = self.action
 
         #self.left = self.action[1]
-        #print(self.action.shape)
         
         self.mafs()
         self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2#calc error
         
         
-        self.state = np.array([self.slider.value, self.sliderVel, self.error, self.pengelum.rotVel])#state of the sim
+        self.state = np.array([self.slider.value, self.sliderVel, self.error, 1])#self.pengelum.rotVel])#state of the si
+        print(self.state)
         
         #reward
         if (self.error < .2) and (self.error > -.2):
@@ -230,8 +231,9 @@ class GUI(App):
             
         #done
         if self.done:
-            print(f"score: {self.score}")
+            #print(f"score: {self.score}")
             #App.get_running_app().stop()
+            pass
             #self.done = False
 
         self.output.text = f"episode nr {self.episodes+1}"#output. whatever
@@ -245,7 +247,7 @@ class GUI(App):
             self.episodes += 1
             self.reset()
             print("resetin")
-        print(self.error)
+        #print(self.error)
 
     def mafs(self):
         self.time = time.time()#set time to actual time

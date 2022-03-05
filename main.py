@@ -26,6 +26,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import keyboard
+import random
 
 import gym
 from gym.spaces import Discrete, Box
@@ -52,7 +53,7 @@ class Env(gym.Env):
         return sim.state 
     def step(self, action):
         sim.action = action
-        sim.mafs()
+        sim.step()
         info = {}
         # Return step information
         return sim.state, sim.reward, sim.done, info
@@ -75,7 +76,7 @@ class Pengelum(Image):
     xPos = NumericProperty(0)#px
     angleDegrees = NumericProperty(0)
     #for math shit
-    theta = NumericProperty(.99*np.pi)
+    theta = NumericProperty((.995+(random.randint(-10,10)/200))*np.pi)
     L = NumericProperty(22.5)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
     rotVel = NumericProperty(0.0)
 
@@ -134,7 +135,7 @@ class GUI(App):
 
         #create model
         self.model = tf.keras.models.Sequential([
-                tf.keras.layers.Flatten(input_shape = [1, 4]),# replcae with self.state.shape maby
+                tf.keras.layers.Flatten(input_shape = self.state.shape),
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
                 tf.keras.layers.Dense(units=3, activation=tf.nn.softmax)#maby not right...
@@ -202,20 +203,22 @@ class GUI(App):
             self.reset()
             
     def step(self):
-        #Agent input
+        #reset reward
+        self.reward = 0
+
+        #Agent input. shits fucked
         
         self.right = self.action
 
         #self.left = self.action[1]
-        print(self.action.shape)
+        #print(self.action.shape)
         
         self.mafs()
-        
-        self.reward = 0
-        self.state = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])#state of the sim
-        
-
         self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2#calc error
+        
+        
+        self.state = np.array([self.slider.value, self.sliderVel, self.error, self.pengelum.rotVel])#state of the sim
+        
         #reward
         if (self.error < .2) and (self.error > -.2):
             self.reward += 1
@@ -232,6 +235,17 @@ class GUI(App):
             #self.done = False
 
         self.output.text = f"episode nr {self.episodes+1}"#output. whatever
+        
+        
+        
+        self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
+        self.pengelum.xPos = self.slider.value
+
+        if (self.error > .4) or (self.error < -.4):
+            self.episodes += 1
+            self.reset()
+            print("resetin")
+        print(self.error)
 
     def mafs(self):
         self.time = time.time()#set time to actual time
@@ -254,13 +268,13 @@ class GUI(App):
 
         self.pengelum.theta += self.pengelum.rotVel + float(self.sliderResult)#set angle. belive slider result shoud be here. prollyu not 100%right. but feels realistic
     
-    
+        #print(self.pengelum.theta)
     
 
 
 
     def reset(self):
-        self.pengelum.theta = .99 * np.pi
+        self.pengelum.theta = ((.995+(random.randint(-10,10)/200))*np.pi)#.99 so does not get stuck
         self.pengelum.rotVel = 0
         self.slider.value = 0
         self.sliderLast = 0
@@ -303,7 +317,7 @@ class GUI(App):
             self.autoMod = True
         
         
-        self.dqn.fit(self.env, nb_steps=5000, visualize=False, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
+        self.dqn.fit(self.env, nb_steps=5000, visualize=0, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
 
         
         

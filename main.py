@@ -45,7 +45,7 @@ from copy import deepcopy
 class Env(gym.Env):
     def __init__(self):
         # Actions we can take, down, stay, up
-        self.action_space = Discrete(3)
+        self.action_space = Discrete(2)
         # Temperature array
         self.observation_space = Box(low=np.array([0]), high=np.array([3]))
     def reset(self):
@@ -125,7 +125,7 @@ class GUI(App):
         #ML
         #ai class. maby idfk shit
         self.state = np.array([[0,0,0,0]], dtype = np.float32)
-        self.action = np.array([False,False,False], dtype = np.bool_)
+        self.action = np.array([0,0], dtype = np.float32)
         self.reward = 0
         self.right = False
         self.left = False
@@ -138,7 +138,7 @@ class GUI(App):
                 tf.keras.layers.Flatten(input_shape = self.state.shape),
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-                tf.keras.layers.Dense(units=3, activation=tf.nn.softmax)#maby not right...
+                tf.keras.layers.Dense(units=2, activation=tf.nn.softmax)#maby not right...
                 ]) 
 
         #create agent
@@ -183,7 +183,7 @@ class GUI(App):
             self.keyboardControll()
         
         #ML data + mafs atm
-        self.step()
+        #self.step()
 
 
         #graph
@@ -208,7 +208,7 @@ class GUI(App):
 
         #Agent input. shits fucked
         
-        self.right = self.action
+        print(self.action)
 
         #self.left = self.action[1]
         

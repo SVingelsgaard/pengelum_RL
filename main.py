@@ -57,7 +57,7 @@ class Env(gym.Env):
         
         info = {}
         # Return step information
-        return sim.state, sim.reward, sim.done, info
+        return [0,0,0,0], sim.reward, sim.done, info
     def render(self):
         pass
 
@@ -85,7 +85,6 @@ class Graph(BoxLayout):
     pass
 
 class GUI(App):
-    
     def on_start(self): #variables
         #system variables
         self.setCYCLETIME = 0.02
@@ -217,8 +216,7 @@ class GUI(App):
         self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2#calc error
         
         
-        self.state = np.array([self.slider.value, self.sliderVel, self.error, 1])#self.pengelum.rotVel])#state of the si
-        print(self.state)
+        self.state = np.array([self.slider.value, self.sliderVel, self.error, self.pengelum.rotVel])#state of the sim
         
         #reward
         if (self.error < .2) and (self.error > -.2):

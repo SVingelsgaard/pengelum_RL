@@ -44,10 +44,19 @@ from copy import deepcopy
 
 class Env(gym.Env):
     def __init__(self):
-        # Actions we can take, down, stay, up
-        self.action_space = Discrete(2)
-        # Temperature array
-        self.observation_space = Box(low=np.array([0]), high=np.array([3]))
+        self.action_space = gym.spaces.Box(
+            low=0.0,
+            high=1.0,
+            shape=(sim.action.shape),
+            dtype=np.float32
+        )
+        self.observation_space = gym.spaces.Box(
+            low=0,
+            high=2,
+            shape=(sim.state.shape),
+            dtype=np.float32
+        )
+
     def reset(self):
         sim.reset()
         return sim.state 
@@ -124,7 +133,7 @@ class GUI(App):
 
         #ML
         #ai class. maby idfk shit
-        self.state = np.array([[0,0,0,0]], dtype = np.float32)
+        self.state = np.array([0,0,0,0], dtype = np.float32)
         self.action = np.array([0,0], dtype = np.float32)
         self.reward = 0
         self.right = False
@@ -135,10 +144,10 @@ class GUI(App):
 
         #create model
         self.model = tf.keras.models.Sequential([
-                tf.keras.layers.Flatten(input_shape = self.state.shape),
+                tf.keras.layers.Flatten(input_shape=self.state.shape),#wrong shape or sum
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-                tf.keras.layers.Dense(units=2, activation=tf.nn.softmax)#maby not right...
+                tf.keras.layers.Dense(len(self.action), activation=tf.nn.softmax)#maby not right...
                 ]) 
 
         #create agent
@@ -147,7 +156,7 @@ class GUI(App):
               memory=SequentialMemory(limit=50000, window_length=1), 
               policy=BoltzmannQPolicy(), 
 
-              nb_actions=self.env.action_space.n, 
+              nb_actions=2, 
               nb_steps_warmup=10,
               target_model_update=1e-2
               )
@@ -281,7 +290,7 @@ class GUI(App):
         self.sliderResult = 0
         self.left = 0
         self.right = 0
-        self.state = np.array([self.slider.value, self.sliderVel, self.pengelum.theta, self.pengelum.rotVel])#state of the sim
+        self.state = np.array([self.slider.value, self.sliderVel, self.error, self.pengelum.rotVel])#state of the sim
         
 
     def digitalControll(self):

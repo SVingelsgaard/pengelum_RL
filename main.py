@@ -144,11 +144,12 @@ class GUI(App):
 
         #create model
         self.model = tf.keras.models.Sequential([
-                tf.keras.layers.Flatten(input_shape=self.state.shape),#wrong shape or sum
+                tf.keras.layers.Flatten(input_shape=(1,4,)),#wrong shape or sum
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
-                tf.keras.layers.Dense(len(self.action), activation=tf.nn.softmax)#maby not right...
+                tf.keras.layers.Dense(2, activation=tf.nn.softmax)#maby not right...
                 ]) 
+        print(self.model.summary())
 
         #create agent
         self.dqn = DQNAgent(

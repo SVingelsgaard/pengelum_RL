@@ -115,7 +115,11 @@ WindowManager:
                 Button:
                     text: "reset"
                     on_release:
-                        app.step()
+                        app.resetButton()
+                Button:
+                    text: "step"
+                    on_release:
+                        app.stepButton()
 
         
         Output:

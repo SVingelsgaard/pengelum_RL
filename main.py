@@ -66,7 +66,7 @@ class Env(gym.Env):
         
         info = {}
         # Return step information
-        return [0,0,0,0], sim.reward, sim.done, info
+        return sim.state, sim.reward, sim.done, info
     def render(self):
         pass
 
@@ -149,7 +149,6 @@ class GUI(App):
                 tf.keras.layers.Dense(units=24, activation=tf.nn.relu),
                 tf.keras.layers.Dense(2, activation=tf.nn.softmax)#maby not right...
                 ]) 
-        print(self.model.summary())
 
         #create agent
         self.dqn = DQNAgent(
@@ -207,10 +206,6 @@ class GUI(App):
 
         #runtime
         self.runTime += self.readCYCLETIME 
-
-        if (self.error > .4) or (self.error < -.4):
-            self.episodes += 1
-            self.reset()
             
     def step(self):
         #reset reward
@@ -218,9 +213,9 @@ class GUI(App):
 
         #Agent input. shits fucked
         
-        print(self.action)
+        #print(self.action)
 
-        #self.left = self.action[1]
+        print("action: ", self.action) #self.right, self.left = self.action
         
         self.mafs()
         self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2#calc error
@@ -254,7 +249,6 @@ class GUI(App):
         if (self.error > .4) or (self.error < -.4):
             self.episodes += 1
             self.reset()
-            print("resetin")
         #print(self.error)
 
     def mafs(self):
@@ -325,11 +319,25 @@ class GUI(App):
             self.autoMod = False
         else:
             self.autoMod = True
-        
+
+        #test
+        """if not self.done:
+            #env.render()
+            action = self.env.action_space.sample()
+            self.env.step(action)
+            print(action)
+
+            print(f'Episode:{self.episodes} Score:{self.score}')"""
+    
+    
+
         
         self.dqn.fit(self.env, nb_steps=5000, visualize=0, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
 
-        
+    def stepButton(self):
+        self.step()
+    def resetButton(self):
+        self.env.reset()    
         
         
     def updateGraph(self):

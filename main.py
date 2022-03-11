@@ -215,7 +215,7 @@ class GUI(App):
         
         #print(self.action)
 
-        print("action: ", self.action) #self.right, self.left = self.action
+        #print("action: ", self.action) #self.right, self.left = self.action
         
         self.mafs()
         self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2#calc error
@@ -234,22 +234,18 @@ class GUI(App):
             
         #done
         if self.done:
-            #print(f"score: {self.score}")
-            #App.get_running_app().stop()
             pass
-            #self.done = False
 
         self.output.text = f"episode nr {self.episodes+1}"#output. whatever
         
-        
-        
-        self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
-        self.pengelum.xPos = self.slider.value
 
         if (self.error > .4) or (self.error < -.4):
             self.episodes += 1
             self.reset()
-        #print(self.error)
+        
+        #update grapichs. mayby jalla
+        self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
+        self.pengelum.xPos = self.slider.value
 
     def mafs(self):
         self.time = time.time()#set time to actual time
@@ -286,6 +282,10 @@ class GUI(App):
         self.left = 0
         self.right = 0
         self.state = np.array([self.slider.value, self.sliderVel, self.error, self.pengelum.rotVel])#state of the sim
+
+        #update grapichs. mayby jalla
+        self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
+        self.pengelum.xPos = self.slider.value
         
 
     def digitalControll(self):
@@ -363,7 +363,8 @@ class GUI(App):
             self.plotGrap = True
     #runns cycle
     def runApp(self):
-        Clock.schedule_interval(self.cycle, self.setCYCLETIME)
+        pass
+        #Clock.schedule_interval(self.cycle, self.setCYCLETIME)
     #runs myApp(graphics)
     def build(self):
         return Builder.load_file("frontend/main.kv")

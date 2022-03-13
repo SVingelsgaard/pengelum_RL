@@ -29,10 +29,8 @@ import keyboard
 import random
 
 import gym
-from gym.spaces import Discrete, Box
 
 import tensorflow as tf
-import keras
 
 #from tf_agents.agents.dqn import dqn_agent
 from rl.agents import DQNAgent
@@ -65,7 +63,7 @@ class Env(gym.Env):
         sim.step()
         
         info = {}
-
+        #print(sim.state)
         return sim.state, sim.reward, sim.done, info
     def render(self):
         pass
@@ -173,6 +171,7 @@ class GUI(App):
         if self.runTime != 0 and self.runTime < .03:
             time.sleep(1)
 
+        #self.step()
         """if not self.done:
                 #env.render()
             action = self.env.action_space.sample()
@@ -188,8 +187,6 @@ class GUI(App):
     def plot(self):
         if self.plotGrap:
             self.updateGraph()
-        if self.autoMod:
-            self.keyboardControll()
 
         #graph
         self.x.append(self.runTime)
@@ -204,12 +201,26 @@ class GUI(App):
         #reset reward
         self.reward = 0
 
-        try:
+        """try:
             self.right, self.left = self.action #agent action
         except:
             self.right, self.left = 0.0, 0.0
-            print("action failed")
+            print("action failed")"""
+
+        #take action
         
+        if self.autoMod:
+            self.keyboardControll()
+            """elif self.action == 0:
+                self.right, self.left = 0.0, 0.0
+            elif self.action == 1:
+                self.right, self.left = 1.0, 0.0
+            elif self.action == 2:
+                self.right, self.left = 0.0, 1.0"""
+        else:
+            self.right, self.left = 0.0, 0.0
+        self.digitalControll()#digital control
+    
         self.mafs()
         
         self.state = np.array([self.slider.value, self.sliderVel, self.error, self.pengelum.rotVel])#state of the sim
@@ -248,7 +259,7 @@ class GUI(App):
         self.timeLast = self.time#uptdate last time
         
         
-        self.digitalControll()#digital control
+        
 
         
         
@@ -268,7 +279,7 @@ class GUI(App):
 
 
     def reset(self):
-        self.pengelum.theta = ((.995+(random.randint(-10,10)/200))*np.pi)#.99 so does not get stuck
+        self.pengelum.theta = ((1.0025+(random.randint(-6,5)/200))*np.pi)#.99 so does not get stuck
         self.pengelum.rotVel = 0
         self.slider.value = 0
         self.sliderLast = 0
@@ -285,13 +296,15 @@ class GUI(App):
     def digitalControll(self):
         try:
             if self.right != 0:
-                self.slider.value += float(self.right) *1000* self.mafsTime#1500 for float 0-1 val. 
+                self.slider.value += float(self.right) *100* self.mafsTime#1500 for float 0-1 val. 
+                print(float(self.right) *100* self.mafsTime)
                 self.right = False
             if self.left != 0:
-                self.slider.value -= float(self.left) *1000* self.mafsTime
+                self.slider.value -= float(self.left) *100* self.mafsTime
                 self.left = False
         except:
-            pass
+            print("action dedd")
+            #pass
         
 
         #clamp
@@ -314,13 +327,11 @@ class GUI(App):
         else:
             self.autoMod = True
 
-        #test
-
-        
-        self.dqn.fit(self.env, nb_steps=5000, visualize=0, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
+    def trainButton(self):
+        self.dqn.fit(self.env, nb_steps=5000, visualize=False, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
 
     def stepButton(self):
-        self.step()
+        self.env.step(0)
     def resetButton(self):
         self.env.reset()    
         

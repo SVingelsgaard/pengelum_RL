@@ -65,7 +65,7 @@ class Env(gym.Env):
         sim.step()
         
         info = {}
-        # Return step information
+
         return sim.state, sim.reward, sim.done, info
     def render(self):
         pass
@@ -86,7 +86,7 @@ class Pengelum(Image):
     xPos = NumericProperty(0)#px
     angleDegrees = NumericProperty(0)
     #for math shit
-    theta = NumericProperty((.995+(random.randint(-10,10)/200))*np.pi)
+    theta = NumericProperty(0)
     L = NumericProperty(22.5)#length of pengelum. In meters on screen(.06). 325px(to the center of the blub)
     rotVel = NumericProperty(0.0)
 
@@ -139,6 +139,9 @@ class GUI(App):
         self.right = False
         self.left = False
 
+        #reset sim
+        self.reset()
+
         #create env. gym class i think
         self.env = Env()
 
@@ -163,17 +166,6 @@ class GUI(App):
         #compile agent
         self.dqn.compile(tf.keras.optimizers.Adam(learning_rate=1e-3), metrics=['mae'])
 
-
-
-
-        #train agent
-        
-                
-
-
-
-
-
     #continus cycle
     def cycle (self, readCYCLETIME):
         #scuffed time shit  
@@ -181,19 +173,23 @@ class GUI(App):
         if self.runTime != 0 and self.runTime < .03:
             time.sleep(1)
 
-        self.digitalControll()
+        """if not self.done:
+                #env.render()
+            action = self.env.action_space.sample()
+            self.env.step(action)
+            
 
+            #print(f'Episode:{self.episodes} Score:{self.score}')"""
+        
 
+        #runtime
+        self.runTime += self.readCYCLETIME 
 
-
+    def plot(self):
         if self.plotGrap:
             self.updateGraph()
         if self.autoMod:
             self.keyboardControll()
-        
-        #ML data + mafs atm
-        #self.step()
-
 
         #graph
         self.x.append(self.runTime)
@@ -203,26 +199,21 @@ class GUI(App):
         #update grapics
         self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
         self.pengelum.xPos = self.slider.value
-
-        #runtime
-        self.runTime += self.readCYCLETIME 
             
     def step(self):
         #reset reward
         self.reward = 0
 
-        #Agent input. shits fucked
-        
-        #print(self.action)
-
-        #print("action: ", self.action) #self.right, self.left = self.action
+        try:
+            self.right, self.left = self.action #agent action
+        except:
+            self.right, self.left = 0.0, 0.0
+            print("action failed")
         
         self.mafs()
-        self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2#calc error
-        
         
         self.state = np.array([self.slider.value, self.sliderVel, self.error, self.pengelum.rotVel])#state of the sim
-        
+
         #reward
         if (self.error < .2) and (self.error > -.2):
             self.reward += 1
@@ -240,8 +231,8 @@ class GUI(App):
         
 
         if (self.error > .4) or (self.error < -.4):
-            self.episodes += 1
             self.reset()
+            self.episodes += 1
         
         #update grapichs. mayby jalla
         self.pengelum.angleDegrees = float(np.degrees(self.pengelum.theta))
@@ -255,7 +246,11 @@ class GUI(App):
             
         self.mafsTime = self.time - self.timeLast #calc mafstime. basically cycletime
         self.timeLast = self.time#uptdate last time
+        
+        
+        self.digitalControll()#digital control
 
+        
         
         self.sliderVel = -float((self.slider.value - self.sliderLast)*self.mafsTime)#slider vel
         self.sliderLast = self.slider.value#update last slider val
@@ -265,10 +260,9 @@ class GUI(App):
         
 
         self.pengelum.rotVel += float((((self.envirement.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .3)))*self.mafsTime#angular vel
-
         self.pengelum.theta += self.pengelum.rotVel + float(self.sliderResult)#set angle. belive slider result shoud be here. prollyu not 100%right. but feels realistic
     
-        #print(self.pengelum.theta)
+        self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2#calc error
     
 
 
@@ -291,10 +285,10 @@ class GUI(App):
     def digitalControll(self):
         try:
             if self.right != 0:
-                self.slider.value += float(self.right) *1000* self.readCYCLETIME#1500 for float 0-1 val. 
+                self.slider.value += float(self.right) *1000* self.mafsTime#1500 for float 0-1 val. 
                 self.right = False
             if self.left != 0:
-                self.slider.value -= float(self.left) *1000* self.readCYCLETIME
+                self.slider.value -= float(self.left) *1000* self.mafsTime
                 self.left = False
         except:
             pass
@@ -321,15 +315,6 @@ class GUI(App):
             self.autoMod = True
 
         #test
-        """if not self.done:
-            #env.render()
-            action = self.env.action_space.sample()
-            self.env.step(action)
-            print(action)
-
-            print(f'Episode:{self.episodes} Score:{self.score}')"""
-    
-    
 
         
         self.dqn.fit(self.env, nb_steps=5000, visualize=0, verbose=1)#tror error skyldes at resetfunksjonen kalles opp og dermed ikke får hentet de riktige observation variablene.
@@ -363,8 +348,7 @@ class GUI(App):
             self.plotGrap = True
     #runns cycle
     def runApp(self):
-        pass
-        #Clock.schedule_interval(self.cycle, self.setCYCLETIME)
+        Clock.schedule_interval(self.cycle, self.setCYCLETIME)
     #runs myApp(graphics)
     def build(self):
         return Builder.load_file("frontend/main.kv")

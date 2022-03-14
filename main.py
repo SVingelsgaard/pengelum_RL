@@ -171,6 +171,7 @@ class GUI(App):
         if self.runTime != 0 and self.runTime < .03:
             time.sleep(1)
 
+        print(float((((self.envirement.g/self.pengelum.L) * np.sin(self.pengelum.theta))))*self.mafsTime)
         #self.step()
         """if not self.done:
                 #env.render()
@@ -270,7 +271,8 @@ class GUI(App):
 
         
 
-        self.pengelum.rotVel += float((((self.envirement.g/self.pengelum.L) * np.sin(self.pengelum.theta))-(self.pengelum.rotVel * .3)))*self.mafsTime#angular vel
+        self.pengelum.rotVel += float(((self.envirement.g/self.pengelum.L) * np.sin(self.pengelum.theta))*self.mafsTime)#angular vel
+        print(float((((self.envirement.g/self.pengelum.L) * np.sin(self.pengelum.theta))))*self.mafsTime)
         self.pengelum.theta += self.pengelum.rotVel + float(self.sliderResult)#set angle. belive slider result shoud be here. prollyu not 100%right. but feels realistic
     
         self.error = ((((self.pengelum.theta/np.pi)/2) % 1)-.5)*-2#calc error
